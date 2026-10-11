@@ -1,4 +1,5 @@
 import type { TokenMarketData } from "~/types";
+import { DEFAULT_CHAIN_ID } from "~/config/chains";
 import { env } from "~/env";
 
 export interface TokenMarketDataApiResponse {
@@ -8,14 +9,16 @@ export interface TokenMarketDataApiResponse {
 interface GetTokenMarketParams {
   contractAddress: string;
   tokenId: string;
+  chainId?: string;
 }
 
 export default async function getTokenMarketData({
   contractAddress,
   tokenId,
+  chainId = DEFAULT_CHAIN_ID,
 }: GetTokenMarketParams) {
   const response = await fetch(
-    `${env.NEXT_PUBLIC_MARKETPLACE_API_URL}/tokens/${contractAddress}/0x534e5f4d41494e/${tokenId}/marketdata`,
+    `${env.NEXT_PUBLIC_MARKETPLACE_API_URL}/tokens/${contractAddress}/${chainId}/${tokenId}/marketdata`,
   );
 
   if (!response.ok) {

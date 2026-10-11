@@ -1,23 +1,28 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { isStarknetAddress, normalizeChainId } from "~/config/chains";
 import { env } from "~/env";
 import getCollection from "~/lib/getCollection";
 import CollectionBanner from "./components/collection-banner";
 import CollectionHeader from "./components/collection-header";
 import CollectionItems from "./components/collection-items";
 import MobileCollectionHeader from "./components/mobile-collection-header";
-import { ChainId, CollectionAddresses, CollectionDescription, Collections } from "~/config/homepage";
+import CollectionNotIndexed from "./components/collection-not-indexed";
 
 interface GenerateMetadataProps {
   params: Promise<{ collectionAddress: string }>;
+  searchParams: Promise<{ chain?: string }>;
 }
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: GenerateMetadataProps): Promise<Metadata> {
   const collectionAddress = (await params).collectionAddress;
-  const collection = await getCollection({ collectionAddress });
+  const { chain } = await searchParams;
+  const chainId = normalizeChainId(chain);
+  const collection = await getCollection({ collectionAddress, chainId });
   const platform =
     env.NEXT_PUBLIC_THEME === "unframed" ? "Unframed" : "Ark Market";
   const name = collection?.name ?? "Collection";
@@ -36,14 +41,36 @@ interface CollectionPageProps {
   params: {
     collectionAddress: string;
   };
+  searchParams?: {
+    chain?: string;
+  };
 }
 
-export default async function CollectionPage({ params }: CollectionPageProps) {
+export default async function CollectionPage({
+  params,
+  searchParams,
+}: CollectionPageProps) {
   const { collectionAddress } = params;
-  const collection = await getCollection({ collectionAddress });
+  const chainId = normalizeChainId(searchParams?.chain);
 
-  const collectionDescription = CollectionDescription[collectionAddress];
-  if (!collectionDescription || !collection) {
+  // Resolve any collection the indexer knows about — not just the ones in the
+  // hardcoded CollectionDescription map. This is what makes collections
+  // discovered Starknet-wide (via /collections or search) actually browsable.
+  const collection = await getCollection({ collectionAddress, chainId });
+
+  if (!collection) {
+    // The indexer does not know this collection yet. If it looks like a real
+    // contract address, surface the on-chain verification / indexing request
+    // flow instead of a bare 404 so new deployments can be discovered.
+    if (isStarknetAddress(collectionAddress)) {
+      return (
+        <CollectionNotIndexed
+          collectionAddress={collectionAddress}
+          chainId={chainId}
+        />
+      );
+    }
+
     return notFound();
   }
 
@@ -65,7 +92,6 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
         collectionAddress={collectionAddress}
         collectionTokenCount={collection.token_count}
       />
-    </div>);
+    </div>
+  );
 }
-
-

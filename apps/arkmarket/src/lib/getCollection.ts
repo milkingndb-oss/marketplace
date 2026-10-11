@@ -1,4 +1,5 @@
 import type { Collection } from "~/types";
+import { DEFAULT_CHAIN_ID } from "~/config/chains";
 import { env } from "~/env";
 
 interface GetCollectionParams {
@@ -10,11 +11,9 @@ export interface CollectionApiResponse {
   data: Collection;
 }
 
-const defaultChainId = "0x534e5f4d41494e";
-
 export default async function getCollection({
   collectionAddress,
-  chainId = defaultChainId,
+  chainId = DEFAULT_CHAIN_ID,
 }: GetCollectionParams) {
   const response = await fetch(
     `${env.NEXT_PUBLIC_MARKETPLACE_API_URL}/collections/${collectionAddress}/${chainId}`,

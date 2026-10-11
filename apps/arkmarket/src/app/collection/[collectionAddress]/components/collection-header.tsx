@@ -36,12 +36,22 @@ export default function CollectionHeader({
 
   const { data } = useCollection({ address: collectionAddress });
 
-  const description = CollectionDescription[collection.address];
+  // Prefer the curated description for known collections; fall back to the
+  // indexer's own description so collections discovered outside the hardcoded
+  // config still render a full header.
+  const curatedDescription = CollectionDescription[collection.address];
+  const description = curatedDescription ?? {
+    created: collection.deployed_timestamp
+      ? new Date(collection.deployed_timestamp * 1000).getFullYear().toString()
+      : "Unknown",
+    description: collection.description ?? "",
+  };
   const collectionConfig = homepageConfig.mainCarousel.find((collection) => collection.address === collectionAddress)
-  if (!data || !description) {
+  if (!data) {
     return null;
   }
-  const image = data.image || collectionConfig?.collectionSrc || null;
+  const image = data.image ?? collectionConfig?.collectionSrc ?? null;
+  const hasInfo = Boolean(collection.description ?? description.description);
 
   return (
     <div className="hidden lg:block">
@@ -83,7 +93,7 @@ export default function CollectionHeader({
                 <ExternalLink href={siteConfig.links.github}>
                   <Github className="h-4" />
                 </ExternalLink>
-                {collection.description || description && (
+                {hasInfo && (
                   <CollapsibleTrigger asChild>
                     <button
                       className={cn(

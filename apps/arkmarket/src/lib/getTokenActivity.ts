@@ -1,4 +1,5 @@
 import type { TokenActivity } from "~/types";
+import { DEFAULT_CHAIN_ID } from "~/config/chains";
 import { env } from "~/env";
 
 export interface TokenActivityApiResponse {
@@ -9,12 +10,14 @@ export interface TokenActivityApiResponse {
 
 interface GetTokenActivityParams {
   contractAddress: string;
+  chainId?: string;
   page?: number;
   tokenId: string;
 }
 
 export default async function getTokenActivity({
   contractAddress,
+  chainId = DEFAULT_CHAIN_ID,
   page,
   tokenId,
 }: GetTokenActivityParams) {
@@ -24,7 +27,7 @@ export default async function getTokenActivity({
     queryParams.push(`page=${page}`);
   }
 
-  const url = `${env.NEXT_PUBLIC_MARKETPLACE_API_URL}/tokens/${contractAddress}/0x534e5f4d41494e/${tokenId}/activity?${queryParams.join("&")}`;
+  const url = `${env.NEXT_PUBLIC_MARKETPLACE_API_URL}/tokens/${contractAddress}/${chainId}/${tokenId}/activity?${queryParams.join("&")}`;
   const response = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
