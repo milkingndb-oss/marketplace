@@ -1,6 +1,7 @@
 import { createSearchParamsCache, parseAsStringLiteral } from "nuqs/server";
 
 import type { CollectionToken, Filters } from "~/types";
+import { DEFAULT_CHAIN_ID } from "~/config/chains";
 import { env } from "~/env";
 
 export const itemsPerPage = 50;
@@ -33,6 +34,7 @@ export interface CollectionTokensApiResponse {
 
 interface GetCollectionTokensParams {
   collectionAddress: string;
+  chainId?: string;
   page?: number;
   sortDirection?: CollectionSortDirection;
   sortBy?: CollectionSortBy;
@@ -42,6 +44,7 @@ interface GetCollectionTokensParams {
 
 export async function getCollectionTokens({
   collectionAddress,
+  chainId = DEFAULT_CHAIN_ID,
   page,
   sortDirection,
   sortBy,
@@ -65,11 +68,11 @@ export async function getCollectionTokens({
   if (sortBy !== undefined) {
     queryParams.push(`sort=${sortBy}`);
   }
-  if (sortBy !== undefined) {
+  if (sortDirection !== undefined) {
     queryParams.push(`direction=${sortDirection}`);
   }
 
-  const url = `${env.NEXT_PUBLIC_MARKETPLACE_API_URL}/collections/${collectionAddress}/0x534e5f4d41494e/tokens?${queryParams.join("&")}`;
+  const url = `${env.NEXT_PUBLIC_MARKETPLACE_API_URL}/collections/${collectionAddress}/${chainId}/tokens?${queryParams.join("&")}`;
   const response = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
